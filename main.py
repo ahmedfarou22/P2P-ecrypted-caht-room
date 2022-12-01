@@ -100,7 +100,10 @@ class AESCipher(object):
         self.key = hashlib.sha256(randomkey.encode()).digest()
 
     def random_key(self):
-        password = ''.join(random.choice(string.printable) for i in range(1000))
+        # choose from all lowercase letter
+        letters = string.ascii_lowercase
+        password = ''.join(random.choice(letters) for i in range(5))
+        # print("Random string of length", 5, "is:", password)
         return password
 
     def encrypt(self, raw):
@@ -242,8 +245,12 @@ def menu():
                 print("please send your public key first to extcahnge public keys")
             
             else:
-                network.send_to_peer(network.IP_LIST[1], (rsa.encrypt(cryptoflags.peer_public_key,aes.key),"3_aes_to_use")) #sending aes ecrypted to use
-                cryptoflags.aes_key_to_use = aes.key
+                encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,"farouk")
+                
+                network.send_to_peer(network.IP_LIST[1],(encrypted_eas,"3_aes_to_use"))
+                
+                
+                cryptoflags.aes_key_to_use = "farouk"
                 cryptoflags.useaes = 1
 
         if command == "8": # view peer
