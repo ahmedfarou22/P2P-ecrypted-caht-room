@@ -94,17 +94,9 @@ class RSA:
         return ''.join(plain)
 
 class AESCipher(object):
-    def __init__(self): 
+    def __init__(self,key): 
         self.bs = AES.block_size
-        randomkey = self.random_key()
-        self.key = hashlib.sha256(randomkey.encode()).digest()
-
-    def random_key(self):
-        # choose from all lowercase letter
-        letters = string.ascii_lowercase
-        password = ''.join(random.choice(letters) for i in range(5))
-        # print("Random string of length", 5, "is:", password)
-        return password
+        self.key = hashlib.sha256(key.encode()).digest()
 
     def encrypt(self, raw):
         raw = self._pad(raw)
@@ -163,8 +155,17 @@ class Cryptographyflags:
         self.extchangepub = 0
         self.useaes = 0
 ########################## start main objects ##########################
+def get_random_string():
+    # choose from all lowercase letter
+    letters = string.ascii_lowercase
+    result_str = ''.join(random.choice(letters) for i in range(10))
+    print("Random string of length", 10, "is:", result_str)
+    return result_str
+randomkey = get_random_string()
+print(randomkey,type(randomkey))
+
 rsa = RSA()
-aes = AESCipher()
+aes = AESCipher(randomkey)
 
 time.sleep(0.5)
 
@@ -245,12 +246,9 @@ def menu():
                 print("please send your public key first to extcahnge public keys")
             
             else:
-                encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,"farouk")
-                
+                encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
                 network.send_to_peer(network.IP_LIST[1],(encrypted_eas,"3_aes_to_use"))
-                
-                
-                cryptoflags.aes_key_to_use = "farouk"
+                cryptoflags.aes_key_to_use = randomkey
                 cryptoflags.useaes = 1
 
         if command == "8": # view peer
