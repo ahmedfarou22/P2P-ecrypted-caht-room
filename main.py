@@ -154,19 +154,9 @@ class Cryptographyflags:
         self.connected = 0
         self.extchangepub = 0
         self.useaes = 0
+
 ########################## start main objects ##########################
-def get_random_string():
-    # choose from all lowercase letter
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(10))
-    print("Random string of length", 10, "is:", result_str)
-    return result_str
-randomkey = get_random_string()
-print(randomkey,type(randomkey))
-
 rsa = RSA()
-aes = AESCipher(randomkey)
-
 time.sleep(0.5)
 
 network = Network()
@@ -174,19 +164,20 @@ cryptoflags = Cryptographyflags()
 
 ################################# program starts here #################################
 
-
 def receive():
     while True:
         peer, address = network.socket.accept()
         pperip, pperport = address
         decoded_somthing = peer.recv(1024).decode()
+        
         receved = json.loads(decoded_somthing)
         print("**just recived\n",receved,type(receved))
-        
+
         if type(receved) == str:
             if receved == "connect": # 1 connect to pper 
                 network.IP_LIST.append(pperip)
                 cryptoflags.connected = 1
+
 
         if type(receved) == list:
             code = receved[len(receved)-1]
@@ -203,31 +194,88 @@ def receive():
             
             if code == "3_aes_to_use": # 3  aes to use
                 cryptoflags.aes_key_to_use = rsa.decrypt(rsa.private,receved[0])
-                print(cryptoflags.aes_key_to_use)
-                cryptoflags.useaes = 1
+                
+                if receved[-2] == str(hashlib.sha256(cryptoflags.aes_key_to_use.encode()).digest()):
+                    print(cryptoflags.aes_key_to_use)
+                    cryptoflags.useaes = 1
+                else:
+                    print("the data was tapred with hash not equel")
+            
+
+            if code == "4_secret": # 4 recive secret message   
+                if receved[-2] == str(hashlib.sha256(receved[0].encode()).digest()):
+                    aes = AESCipher(cryptoflags.aes_key_to_use)
+                    enc_temp = receved[0].encode()
+                    message = aes.decrypt(enc_temp)
+                    print("recived a secret message from peer:",message)
+                else:
+                    print("the data was tapred with hash not equel")
 
 
+                
 
 
 def menu():
     while True:
-        menu = "\n1. connect --> connect to peer \n2. sendPublic --> send public key to peer \n3. send aes --> send aes key to use \n8. view peer --> view peer"
+        menu = "\nType auto --> Automate to start sending:\nType send --> send a message to peer:\nPress 1 --> Connect to peer:\nPress 2 --> Exchange public keys:\nPress 3 --> Agree on an AES key to use:\nPress a --> view peer's IP:\nPress b --> view peer's public key:\nPress c --> view agreed on AES key:\n"
         time.sleep(1)
         print(menu)
         command = input("What whould you like to do : ")
 
+        if command == "auto": # automate the all steps
+            if cryptoflags.connected == 1:
+                print("Error: please continue manually")
+
+            if cryptoflags.extchangepub == 1:
+                print("Error: please continue manually")
+            
+            if cryptoflags.useaes == 1:
+                print("Error: please continue manually")
+
+            else:      
+                ip_input = str(input("Please enter an Ip of a peer: "))
+                
+                if ip_input == network.IP_LIST[0]:
+                    print("--> Please enter an ip of a active node other than your node")
+
+                if len(network.IP_LIST) > 1:
+                    print("Already connected to peer")
+
+                else:
+                    network.send_to_peer(ip_input,"connect") # sending connect 
+                    network.IP_LIST.append(ip_input)
+                    cryptoflags.connected = 1
+                    time.sleep(0.5)
+                    
+                    network.send_to_peer(network.IP_LIST[1], (rsa.public,"1_my_public")) #sending public ip
+                    cryptoflags.extchangepub = 1
+                    time.sleep(0.5)
+
+                    # autogenrate a random key to use with aes
+                    letters = string.ascii_lowercase
+                    randomkey = ''.join(random.choice(letters) for i in range(32))
+                    print("Random string of length", 32, "is:", randomkey)
+                    encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
+                    network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
+                    cryptoflags.aes_key_to_use = randomkey
+                    cryptoflags.useaes = 1
+                    time.sleep(0.5)
+                    print("All done type send to start sending messages")
+            
         if command == "1": # 1-connect
             ip_input = str(input("Please enter an Ip of a peer: "))
             if ip_input == network.IP_LIST[0]:
                 print("--> Please enter an ip of a active node other than your node")
             
+            if len(network.IP_LIST) > 1:
+                print("Already connected to peer")
+
             else:
                 network.send_to_peer(ip_input,"connect")
                 network.IP_LIST.append(ip_input)
                 cryptoflags.connected = 1
                 print("connected succsesfully ")
                 time.sleep(2) # Sleep for 2 seconds 
-
 
         if command == "2": # 2-extchange public keys
             if cryptoflags.connected == 0:
@@ -237,7 +285,6 @@ def menu():
                 network.send_to_peer(network.IP_LIST[1], (rsa.public,"1_my_public")) #sending public ip
                 cryptoflags.extchangepub = 1
 
-
         if command == "3": # 3-send aes to use
             if cryptoflags.connected == 0:
                 print("please connect to a peer first")
@@ -245,27 +292,52 @@ def menu():
             if cryptoflags.extchangepub == 0:
                 print("please send your public key first to extcahnge public keys")
             
+            if cryptoflags.aes_key_to_use != "":
+                print("AES already created press 10 to view it")
+
             else:
+                # autogenrate a random key to use with aes
+                letters = string.ascii_lowercase
+                randomkey = ''.join(random.choice(letters) for i in range(32))
+                print("Random string of length", 32, "is:", randomkey)
+                
                 encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
-                network.send_to_peer(network.IP_LIST[1],(encrypted_eas,"3_aes_to_use"))
+                network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
                 cryptoflags.aes_key_to_use = randomkey
                 cryptoflags.useaes = 1
 
-        if command == "8": # view peer
-            print(network.IP_LIST)
+        if command == "a": # view peer
+            print(network.IP_LIST[-1])
         
-        if command == "9": # view public key of peer
+        if command == "b": # view public key of peer
             print(cryptoflags.peer_public_key)
         
-        if command == "10": # view aes to use
+        if command == "c": # view aes to use
             print(cryptoflags.aes_key_to_use)
+
+        if command == "send": # 4-send a message to peer
+            if cryptoflags.connected == 0:
+                print("please connect to a peer")
+
+            if cryptoflags.extchangepub == 0:
+                print("please send your public key to extcahnge public keys")
+            
+            if cryptoflags.useaes == 0:
+                print("please send the EAS key to use")
+            
+            else:
+                message = str(input("Please enter your secret message: "))
+                aes = AESCipher(cryptoflags.aes_key_to_use)
+                encrypted_message_aes = aes.encrypt(message)
+                tosend = encrypted_message_aes.decode()
+                network.send_to_peer(network.IP_LIST[1],(tosend,str(hashlib.sha256(tosend.encode()).digest()),"4_secret"))
+
+
+
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
 
 menu_thread = threading.Thread(target=menu)
 menu_thread.start()
-
-
-
 
