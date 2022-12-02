@@ -2,6 +2,211 @@ import socket,threading,time,random, math, random,json,hashlib, base64,string
 from Crypto import Random
 from Crypto.Cipher import AES
 
+# for gui 
+import tkinter
+import tkinter.messagebox
+import customtkinter
+
+customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
+customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
+
+class App(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+
+        # configure window
+        self.title("End To End Encrypted - P2P Chat Room")
+        self.geometry(f"{1100}x{580}")
+
+        # configure grid layout (4x4)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure((2, 3), weight=0)
+        self.grid_rowconfigure((0, 1, 2), weight=1)
+
+        # create sidebar frame with widgets
+        self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
+        self.sidebar_frame.grid(row=0, column=0, rowspan=4, sticky="nsew")
+        self.sidebar_frame.grid_rowconfigure(4, weight=1)
+        
+        self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="P2P Chat Room", font=customtkinter.CTkFont(size=20, weight="bold"))
+        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+
+        self.string_input_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.Connect_to_peer, text="Connect to peer")
+        self.string_input_button_1.grid(row=1, column=0, padx=20, pady=(10, 10))
+        
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.extchangepublickeys, text= "Exchange public keys")
+        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
+        
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.agree_on_aes,text="Agree on AES key")
+        self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
+        
+        self.string_input_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Auto connect", command=self.auto_connect)
+        self.string_input_button_4.grid(row=4, column=0, padx=20, pady=(10, 10))
+        
+        self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
+        self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
+        self.appearance_mode_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["Dark","Light"],
+                                                                       command=self.change_appearance_mode_event)
+        self.appearance_mode_optionemenu.grid(row=6, column=0, padx=20, pady=(10, 10))
+        self.scaling_label = customtkinter.CTkLabel(self.sidebar_frame, text="UI Scaling:", anchor="w")
+        self.scaling_label.grid(row=7, column=0, padx=20, pady=(10, 0))
+        self.scaling_optionemenu = customtkinter.CTkOptionMenu(self.sidebar_frame, values=["100%","80%", "90%",  "110%", "120%"],
+                                                               command=self.change_scaling_event)
+        self.scaling_optionemenu.grid(row=8, column=0, padx=20, pady=(10, 20))
+
+
+        # create main entry and button
+        self.entry = customtkinter.CTkEntry(self, placeholder_text="Enter your secret message")
+        self.entry.grid(row=3, column=1, columnspan=2, padx=(20, 0), pady=(0, 20), sticky="nsew")
+
+        self.main_button_1 = customtkinter.CTkButton(master=self, fg_color="transparent", border_width=2, text_color=("gray10", "#DCE4EE"),command=self.send_secret, text="Send")
+        self.main_button_1.grid(row=3, column=3, padx=(20, 20), pady=(0, 20), sticky="nsew")
+
+        # create textbox above
+        self.textbox_message = customtkinter.CTkTextbox(self, width=500)
+        self.textbox_message.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        
+        # create textbox below
+        self.textbox_log = customtkinter.CTkTextbox(self, width=500)
+        self.textbox_log.grid(row=1, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
+        
+
+
+        # create radiobutton frame
+        self.view_frame = customtkinter.CTkFrame(self)
+        # self.view_frame.grid(row=0, column=3, padx=(20, 20), pady=(20, 0), sticky="nsew")
+        self.view_frame.grid(row=0, column=3, rowspan=1,padx=(20, 20),pady=(20, 0), sticky="nsew")
+
+        self.lable_for_space = customtkinter.CTkLabel(master=self.view_frame, text="View peer's properties", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.lable_for_space.grid(row=0, column=0, padx=20, pady=(20, 10))
+        
+        self.view_button_1 = customtkinter.CTkButton(master=self.view_frame, command=self.view_peer_ip, text= "View peer's IP")
+        self.view_button_1.grid(row=1, column=0, padx=20, pady=10)
+
+        self.view_button_2 = customtkinter.CTkButton(master=self.view_frame, command=self.view_peer_public_key, text= "View peer's public key")
+        self.view_button_2.grid(row=2, column=0, padx=20, pady=10)
+
+        self.view_button_3 = customtkinter.CTkButton(master=self.view_frame, command=self.view_agreed_aes_key, text= "View agreed AES")
+        self.view_button_3.grid(row=3, column=0, padx=20, pady=10)
+
+        #grid down
+        self.view_frame2 = customtkinter.CTkFrame(self)
+        self.view_frame2.grid(row=1, column=3, rowspan=1,padx=(20, 20),pady=(20, 0), sticky="nsew")
+        
+        self.lable_for_space = customtkinter.CTkLabel(master=self.view_frame2, text="View my properties ", font=customtkinter.CTkFont(size=12, weight="bold"))
+        self.lable_for_space.grid(row=0, column=0, padx=20, pady=(20, 10))
+
+
+        self.view_button_4 = customtkinter.CTkButton(master=self.view_frame2, command=self.view_my_ip, text= "View my IP")
+        self.view_button_4.grid(row=4, column=0, padx=20, pady=10)
+
+        self.view_button_5 = customtkinter.CTkButton(master=self.view_frame2, command=self.view_my_rsa, text= "View my RSA keys")
+        self.view_button_5.grid(row=5, column=0, padx=20, pady=10)
+
+    def print_to_log(self,title,data):
+        self.textbox_log.insert("0.0", str(title)+":  " + str(data)+"\n")
+
+    def print_secret_message(self,message):
+        self.textbox_message.insert("0.0",str(message)+"\n")
+
+    def Connect_to_peer(self):
+        dialog = customtkinter.CTkInputDialog(text="Type the IP of peer:", title="Peer's IP?")
+        ip_input = dialog.get_input()
+        
+        if ip_input == network.IP_LIST[0]:
+            self.print_to_log("-->","Please enter an ip of a active node other than your node" )
+            
+        if len(network.IP_LIST) > 1:
+            self.print_to_log("-->","Already connected to a peer" )
+
+        else:
+            network.send_to_peer(ip_input,"connect")
+            network.IP_LIST.append(ip_input)
+            cryptoflags.connected = 1
+            time.sleep(2) # Sleep for 2 seconds 
+
+    def extchangepublickeys(self):
+        if cryptoflags.connected == 0:
+            self.print_to_log("-->","lease connect to a peer first" )
+            
+        
+        else:
+            network.send_to_peer(network.IP_LIST[1], (rsa.public,"1_my_public")) #sending public ip
+            cryptoflags.extchangepub = 1
+
+    def agree_on_aes(self):
+        if cryptoflags.connected == 0:
+            self.print_to_log("-->","please connect to a peer first" )
+
+        if cryptoflags.extchangepub == 0:
+            self.print_to_log("-->","please send your public key first to extcahnge public keys" )
+        
+        if cryptoflags.aes_key_to_use != "":
+            self.print_to_log("-->","AES already created press 10 to view it" )
+
+        else:
+            # autogenrate a random key to use with aes
+            letters = string.ascii_lowercase
+            randomkey = ''.join(random.choice(letters) for i in range(32))
+            
+            encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
+            network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
+            cryptoflags.aes_key_to_use = randomkey
+            cryptoflags.useaes = 1
+
+    def auto_connect(self):
+        self.Connect_to_peer()
+        time.sleep(1)
+        
+        self.extchangepublickeys()
+        time.sleep(1)
+
+        self.agree_on_aes()
+        
+
+    def view_peer_ip(self):
+        self.print_to_log("Peer's IP",network.IP_LIST[-1])
+    
+    def view_peer_public_key(self):
+        self.print_to_log("Peer's public key",cryptoflags.peer_public_key)
+    
+    def view_agreed_aes_key(self):
+        self.print_to_log("Peer's agreed AES key",cryptoflags.aes_key_to_use)
+
+    def view_my_ip(self):
+        self.print_to_log("My IP",network.IP_LIST[0])
+
+    def view_my_rsa(self):
+        self.print_to_log("My public key",rsa.public)
+        self.print_to_log("My private key",rsa.private)
+
+    def send_secret(self):
+        if cryptoflags.connected == 0:
+            self.print_to_log("-->","please connect to a peer" )
+
+        if cryptoflags.extchangepub == 0:
+            self.print_to_log("-->","please send your public key to extcahnge public keys" )
+
+        if cryptoflags.useaes == 0:
+            self.print_to_log("-->","please send the EAS key to use" )
+        
+        else:
+            message = self.entry.get()
+            aes = AESCipher(cryptoflags.aes_key_to_use)
+            encrypted_message_aes = aes.encrypt(message)
+            tosend = encrypted_message_aes.decode()
+            network.send_to_peer(network.IP_LIST[1],(tosend,str(hashlib.sha256(tosend.encode()).digest()),"4_secret"))
+            self.print_secret_message("Me: "+ str(message))
+
+
+    def change_appearance_mode_event(self, new_appearance_mode: str):
+        customtkinter.set_appearance_mode(new_appearance_mode)
+
+    def change_scaling_event(self, new_scaling: str):
+        new_scaling_float = int(new_scaling.replace("%", "")) / 100
+        customtkinter.set_widget_scaling(new_scaling_float)
+
+
 class RSA:
     def __init__(self):
         self.p = self.genrate_prime()
@@ -156,11 +361,17 @@ class Cryptographyflags:
         self.useaes = 0
 
 ########################## start main objects ##########################
-rsa = RSA()
+app = App() # gui app
+
+rsa = RSA() #rsa class
 time.sleep(0.5)
 
-network = Network()
-cryptoflags = Cryptographyflags()
+network = Network() # network class
+cryptoflags = Cryptographyflags() # main flags class
+
+app.print_to_log("Network","Successfully started and lisining on port 222..")
+app.print_to_log("My Public key",rsa.public)
+app.print_to_log("My Private key",rsa.private)
 
 ################################# program starts here #################################
 
@@ -171,7 +382,8 @@ def receive():
         decoded_somthing = peer.recv(1024).decode()
         
         receved = json.loads(decoded_somthing)
-        print("**just recived\n",receved,type(receved))
+        print("-->just received\n",receved)
+        app.print_to_log("Just received",receved )
 
         if type(receved) == str:
             if receved == "connect": # 1 connect to pper 
@@ -184,12 +396,10 @@ def receive():
             
             if code == "1_my_public": # 2 send to peer 
                 cryptoflags.peer_public_key = receved[0]
-                print("-Peer Public key",cryptoflags.peer_public_key)
                 network.send_to_peer(network.IP_LIST[1], (rsa.public,"2_my_public"))
             
             if code == "2_my_public": # 2 recived public key peer
                 cryptoflags.peer_public_key = receved[0]
-                print("-Peer Public key",cryptoflags.peer_public_key)
                 cryptoflags.extchangepub = 1
             
             if code == "3_aes_to_use": # 3  aes to use
@@ -200,6 +410,7 @@ def receive():
                     cryptoflags.useaes = 1
                 else:
                     print("the data was tapred with hash not equel")
+                    app.print_to_log("Eroor","the data was tapred with hash not equel" )
             
 
             if code == "4_secret": # 4 recive secret message   
@@ -208,11 +419,11 @@ def receive():
                     enc_temp = receved[0].encode()
                     message = aes.decrypt(enc_temp)
                     print("recived a secret message from peer:",message)
+                    app.print_secret_message("Other: "+str(message))
+                
                 else:
                     print("the data was tapred with hash not equel")
-
-
-                
+                    app.print_to_log("Eroor","the data was tapred with hash not equel" )
 
 
 def menu():
@@ -335,9 +546,11 @@ def menu():
 
 
 
+# start threading in 2 functions and start the gui
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
 
 menu_thread = threading.Thread(target=menu)
 menu_thread.start()
 
+app.mainloop()
