@@ -10,6 +10,7 @@ import customtkinter
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 customtkinter.set_default_color_theme("blue")  # Themes: "blue" (standard), "green", "dark-blue"
 
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -40,7 +41,7 @@ class App(customtkinter.CTk):
         self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.agree_on_aes,text="Agree on AES key")
         self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
         
-        self.string_input_button_4 = customtkinter.CTkButton(self.sidebar_frame, text="Auto connect", command=self.auto_connect)
+        self.string_input_button_4 = customtkinter.CTkButton(self.sidebar_frame, state="disabled",text="Auto connect", command=self.auto_connect)
         self.string_input_button_4.grid(row=4, column=0, padx=20, pady=(10, 10))
         
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
@@ -63,7 +64,7 @@ class App(customtkinter.CTk):
         self.main_button_1.grid(row=3, column=3, padx=(20, 20), pady=(0, 20), sticky="nsew")
 
         # create textbox above
-        self.textbox_message = customtkinter.CTkTextbox(self, width=500)
+        self.textbox_message = customtkinter.CTkTextbox(self, width=500,state="disabled")
         self.textbox_message.grid(row=0, column=1, padx=(20, 0), pady=(20, 0), sticky="nsew")
         
         # create textbox below
@@ -104,10 +105,12 @@ class App(customtkinter.CTk):
         self.view_button_5.grid(row=5, column=0, padx=20, pady=10)
 
     def print_to_log(self,title,data):
-        self.textbox_log.insert("0.0", str(title)+":  " + str(data)+"\n")
+        self.textbox_log.insert("end",str(title)+":  " + str(data)+"\n")
 
     def print_secret_message(self,message):
-        self.textbox_message.insert("0.0",str(message)+"\n")
+        self.textbox_message.configure(state="normal")
+        self.textbox_message.insert("end",str(message)+"\n")
+        self.textbox_message.configure(state="disabled")
 
     def Connect_to_peer(self):
         dialog = customtkinter.CTkInputDialog(text="Type the IP of peer:", title="Peer's IP?")
@@ -161,7 +164,6 @@ class App(customtkinter.CTk):
         self.extchangepublickeys()
         time.sleep(1)
 
-        self.agree_on_aes()
         
 
     def view_peer_ip(self):
@@ -397,6 +399,7 @@ def receive():
             if code == "1_my_public": # 2 send to peer 
                 cryptoflags.peer_public_key = receved[0]
                 network.send_to_peer(network.IP_LIST[1], (rsa.public,"2_my_public"))
+                cryptoflags.extchangepub = 1
             
             if code == "2_my_public": # 2 recived public key peer
                 cryptoflags.peer_public_key = receved[0]
