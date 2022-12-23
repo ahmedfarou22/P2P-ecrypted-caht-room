@@ -32,17 +32,15 @@ class App(customtkinter.CTk):
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="P2P Chat Room", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
-        self.string_input_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.Connect_to_peer, text="Connect to peer")
+        self.string_input_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.Connect_to_peer, text="1. Connect to peer")
         self.string_input_button_1.grid(row=1, column=0, padx=20, pady=(10, 10))
         
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.extchangepublickeys, text= "Exchange public keys")
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.extchangepublickeys, text= "2. Swap public keys")
         self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
         
-        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.agree_on_aes,text="Agree on AES key")
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.agree_on_aes,text="3. Agree on AES key")
         self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
         
-        self.string_input_button_4 = customtkinter.CTkButton(self.sidebar_frame, state="disabled",text="Auto connect", command=self.auto_connect)
-        self.string_input_button_4.grid(row=4, column=0, padx=20, pady=(10, 10))
         
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(row=5, column=0, padx=20, pady=(10, 0))
@@ -141,10 +139,10 @@ class App(customtkinter.CTk):
         if cryptoflags.connected == 0:
             self.print_to_log("-->","please connect to a peer first" )
 
-        if cryptoflags.extchangepub == 0:
+        elif cryptoflags.extchangepub == 0:
             self.print_to_log("-->","please send your public key first to extcahnge public keys" )
         
-        if cryptoflags.aes_key_to_use != "":
+        elif cryptoflags.aes_key_to_use != "":
             self.print_to_log("-->","AES already created press 10 to view it" )
 
         else:
@@ -157,12 +155,6 @@ class App(customtkinter.CTk):
             cryptoflags.aes_key_to_use = randomkey
             cryptoflags.useaes = 1
 
-    def auto_connect(self):
-        self.Connect_to_peer()
-        time.sleep(1)
-        
-        self.extchangepublickeys()
-        time.sleep(1)
 
         
 
@@ -186,10 +178,10 @@ class App(customtkinter.CTk):
         if cryptoflags.connected == 0:
             self.print_to_log("-->","please connect to a peer" )
 
-        if cryptoflags.extchangepub == 0:
+        elif cryptoflags.extchangepub == 0:
             self.print_to_log("-->","please send your public key to extcahnge public keys" )
 
-        if cryptoflags.useaes == 0:
+        elif cryptoflags.useaes == 0:
             self.print_to_log("-->","please send the EAS key to use" )
         
         else:
