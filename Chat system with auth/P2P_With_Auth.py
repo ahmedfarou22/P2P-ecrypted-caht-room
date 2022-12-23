@@ -115,6 +115,7 @@ class App(customtkinter.CTk):
         self.textbox_message.insert("end",str(message)+"\n")
         self.textbox_message.configure(state="disabled")
 
+
     def Connect_to_peer(self):
         dialog = customtkinter.CTkInputDialog(text="Type the IP of peer:", title="Peer's IP?")
         ip_input = dialog.get_input()
@@ -126,10 +127,11 @@ class App(customtkinter.CTk):
             self.print_to_log("-->","Already connected to a peer" )
 
         else:
-            network.send_to_peer(ip_input,"connect")
-            network.IP_LIST.append(ip_input)
-            cryptoflags.connected = 1
-            time.sleep(1) # Sleep for 1 seconds 
+            is_succsess = network.send_to_peer(ip_input,"connect")
+            if is_succsess == True:
+                network.IP_LIST.append(ip_input)
+                cryptoflags.connected = 1
+                time.sleep(1) # Sleep for 1 seconds 
 
     def extchangepublickeys(self):
         if cryptoflags.connected == 0:
@@ -167,8 +169,6 @@ class App(customtkinter.CTk):
         elif cryptoflags.sign == 0:
             self.print_to_log("-->","please authenticate by signature first" )
         
-        elif cryptoflags.aes_key_to_use != "":
-            self.print_to_log("-->","AES already created press 10 to view it" )
 
         else:
             # autogenrate a random key to use with aes
@@ -179,26 +179,7 @@ class App(customtkinter.CTk):
             network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
             cryptoflags.aes_key_to_use = randomkey
             cryptoflags.useaes = 1
-
-
-
-        
-
-    def view_peer_ip(self):
-        self.print_to_log("Peer's IP",network.IP_LIST[-1])
-    
-    def view_peer_public_key(self):
-        self.print_to_log("Peer's public key",cryptoflags.peer_public_key)
-    
-    def view_agreed_aes_key(self):
-        self.print_to_log("Peer's agreed AES key",cryptoflags.aes_key_to_use)
-
-    def view_my_ip(self):
-        self.print_to_log("My IP",network.IP_LIST[0])
-
-    def view_my_rsa(self):
-        self.print_to_log("My public key",rsa.public)
-        self.print_to_log("My private key",rsa.private)
+            cryptoflags.aescounter = 0
 
     def send_secret(self):
         if cryptoflags.connected == 0:
@@ -220,6 +201,35 @@ class App(customtkinter.CTk):
             tosend = encrypted_message_aes.decode()
             network.send_to_peer(network.IP_LIST[1],(tosend,str(hashlib.sha256(tosend.encode()).digest()),"4_secret"))
             self.print_secret_message("Me: "+ str(message))
+
+
+    def view_peer_ip(self):
+        if len(network.IP_LIST) == 1:
+            self.print_to_log("-->","you are not connected to any peers")
+        else:
+            self.print_to_log("Peer's IP",network.IP_LIST[1])
+    
+    def view_peer_public_key(self):
+        if cryptoflags.extchangepub == 1:
+            self.print_to_log("Peer's public key",cryptoflags.peer_public_key)
+
+        elif cryptoflags.extchangepub == 0:
+            self.print_to_log("-->","please swap public keys first")
+    
+    def view_agreed_aes_key(self):
+        if cryptoflags.useaes == 1:
+            self.print_to_log("Peer's agreed AES key",cryptoflags.aes_key_to_use)
+        elif cryptoflags.useaes == 0:
+            self.print_to_log("-->","please agree on a EAS key first")
+
+    def view_my_ip(self):
+        self.print_to_log("My IP",network.IP_LIST[0])
+
+    def view_my_rsa(self):
+        self.print_to_log("My public key",rsa.public)
+        self.print_to_log("My private key",rsa.private)
+
+
 
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
@@ -370,18 +380,23 @@ class Network:
             peer.connect((peer_ip,222))
             peer.send(json.dumps(data).encode())
             peer.close()
-        
+            return True
         except:
+            app.print_to_log("-->","Error sending to peer")
             print("error sending to peer")
+            return False
 
     def send_to_block_chain(self,data):
         try:
             peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            peer.connect(("192.168.68.139",6666))    #### must be changeded
+            peer.connect(("192.168.68.136",6666))    #### must be changeded
             peer.send(json.dumps(data).encode())
             peer.close()
+            return True
         except:
+            app.print_to_log("-->","Error sending to block chain")
             print("error sending to block chain")
+            return False
 
 class Cryptographyflags:
     def __init__(self):
@@ -392,6 +407,7 @@ class Cryptographyflags:
         self.extchangepub = 0
         self.sign = 0
         self.useaes = 0
+        self.aescounter = 0
 
 ########################## start main objects ##########################
 
@@ -407,11 +423,12 @@ cryptoflags = Cryptographyflags() # main flags class
 app.print_to_log("Network","Successfully started and lisining on port 222..")
 app.print_to_log("My Public key",rsa.public)
 app.print_to_log("My Private key",rsa.private)
-app.print_to_log("Block Chain","Successfully added new public RSA key to block chain")
 
-network.send_to_block_chain([network.IP_LIST[0],str(socket.gethostname()),rsa.public,"my_ip_rsa_block"])
-time.sleep(0.3)
 
+is_succsess = network.send_to_block_chain([network.IP_LIST[0],str(socket.gethostname()),rsa.public,"my_ip_rsa_block"])
+if is_succsess == True:
+    app.print_to_log("Block Chain","Successfully added new public RSA key to block chain")
+    time.sleep(0.3)
 
 ################################# program starts here #################################
 
@@ -485,137 +502,19 @@ def receive():
                     message = aes.decrypt(enc_temp)
                     print("recived a secret message from peer:",message)
                     app.print_secret_message("Other: "+str(message))
-                
+                    cryptoflags.aescounter = cryptoflags.aescounter + 1
+                    if cryptoflags.aescounter > 4:
+                        app.print_to_log("Note:","genrating + changing AES key (key rotation after 5 to 10 messages)" )
+                        app.agree_on_aes()
+
                 else:
                     print("the data was tapred with hash not equel")
                     app.print_to_log("Eroor","the data was tapred with hash not equel" )
 
 
-def menu():
-    while True:
-        menu = "\nType auto --> Automate to start sending:\nType send --> send a message to peer:\nPress 1 --> Connect to peer:\nPress 2 --> Exchange public keys:\nPress 3 --> Agree on an AES key to use:\nPress a --> view peer's IP:\nPress b --> view peer's public key:\nPress c --> view agreed on AES key:\n"
-        time.sleep(1)
-        print(menu)
-        command = input("What whould you like to do : ")
-
-        if command == "auto": # automate the all steps
-            if cryptoflags.connected == 1:
-                print("Error: please continue manually")
-
-            if cryptoflags.extchangepub == 1:
-                print("Error: please continue manually")
-            
-            if cryptoflags.useaes == 1:
-                print("Error: please continue manually")
-
-            else:      
-                ip_input = str(input("Please enter an Ip of a peer: "))
-                
-                if ip_input == network.IP_LIST[0]:
-                    print("--> Please enter an ip of a active node other than your node")
-
-                if len(network.IP_LIST) > 1:
-                    print("Already connected to peer")
-
-                else:
-                    network.send_to_peer(ip_input,"connect") # sending connect 
-                    network.IP_LIST.append(ip_input)
-                    cryptoflags.connected = 1
-                    time.sleep(0.5)
-                    
-                    network.send_to_peer(network.IP_LIST[1], (rsa.public,"1_my_public")) #sending public ip
-                    cryptoflags.extchangepub = 1
-                    time.sleep(0.5)
-
-                    # autogenrate a random key to use with aes
-                    letters = string.ascii_lowercase
-                    randomkey = ''.join(random.choice(letters) for i in range(32))
-                    print("Random string of length", 32, "is:", randomkey)
-                    encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
-                    network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
-                    cryptoflags.aes_key_to_use = randomkey
-                    cryptoflags.useaes = 1
-                    time.sleep(0.5)
-                    print("All done type send to start sending messages")
-            
-        if command == "1": # 1-connect
-            ip_input = str(input("Please enter an Ip of a peer: "))
-            if ip_input == network.IP_LIST[0]:
-                print("--> Please enter an ip of a active node other than your node")
-            
-            if len(network.IP_LIST) > 1:
-                print("Already connected to peer")
-
-            else:
-                network.send_to_peer(ip_input,"connect")
-                network.IP_LIST.append(ip_input)
-                cryptoflags.connected = 1
-                print("connected succsesfully ")
-                time.sleep(2) # Sleep for 2 seconds 
-
-        if command == "2": # 2-extchange public keys
-            if cryptoflags.connected == 0:
-                print("Please connect to a peer first")
-            
-            else:
-                network.send_to_peer(network.IP_LIST[1], (rsa.public,"1_my_public")) #sending public ip
-                cryptoflags.extchangepub = 1
-
-        if command == "3": # 3-send aes to use
-            if cryptoflags.connected == 0:
-                print("please connect to a peer first")
-
-            if cryptoflags.extchangepub == 0:
-                print("please send your public key first to extcahnge public keys")
-            
-            if cryptoflags.aes_key_to_use != "":
-                print("AES already created press 10 to view it")
-
-            else:
-                # autogenrate a random key to use with aes
-                letters = string.ascii_lowercase
-                randomkey = ''.join(random.choice(letters) for i in range(32))
-                print("Random string of length", 32, "is:", randomkey)
-                
-                encrypted_eas = rsa.encrypt(cryptoflags.peer_public_key,randomkey)
-                network.send_to_peer(network.IP_LIST[1],(encrypted_eas,str(hashlib.sha256(randomkey.encode()).digest()),"3_aes_to_use"))
-                cryptoflags.aes_key_to_use = randomkey
-                cryptoflags.useaes = 1
-
-        if command == "a": # view peer
-            print(network.IP_LIST[-1])
-        
-        if command == "b": # view public key of peer
-            print(cryptoflags.peer_public_key)
-        
-        if command == "c": # view aes to use
-            print(cryptoflags.aes_key_to_use)
-
-        if command == "send": # 4-send a message to peer
-            if cryptoflags.connected == 0:
-                print("please connect to a peer")
-
-            if cryptoflags.extchangepub == 0:
-                print("please send your public key to extcahnge public keys")
-            
-            if cryptoflags.useaes == 0:
-                print("please send the EAS key to use")
-            
-            else:
-                message = str(input("Please enter your secret message: "))
-                aes = AESCipher(cryptoflags.aes_key_to_use)
-                encrypted_message_aes = aes.encrypt(message)
-                tosend = encrypted_message_aes.decode()
-                network.send_to_peer(network.IP_LIST[1],(tosend,str(hashlib.sha256(tosend.encode()).digest()),"4_secret"))
 
 
-
-
-# start threading in 2 functions and start the gui
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
-
-menu_thread = threading.Thread(target=menu)
-menu_thread.start()
 
 app.mainloop()
