@@ -26,34 +26,16 @@ Section 3: Application overview
 1. high-level overview of how my P2P Chat system works 
 1. **Negotiating**: When peer 1 wants to establish a secure connection with peer 2, it sends a message called a "connect" to initiate the process. This message includes the peer’s IP address  
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.003.png)
 
-*Figure 1 Negotiating*** 
-
-2. **Swapping public keys:** After successful negotiation. peer 1 will get peer2’s RSA public key from the block chain, and peer 2 will also get peer1’s RSA public key from the blockchain. Resulting in both peers having each other’s public keys.**  
-
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.004.jpeg)
-
-*Figure 2 Swapping public keys* 
+2. **Swapping public keys:** After successful negotiation. peer 1 will get peer2’s RSA public key from the block chain, and peer 2 will also get peer1’s RSA public key from the blockchain. Resulting in both peers having each other’s public keys.**   
 
 3. **Authenticating each other**: for peer 1 to authenticate peer 2,  peer 1 receives a signed certificate from peer 2. Peer 1 then verifies the certificate with the public key it received earlier form the block chain. If successful peer 2 then asks for peer1’s certificate for it to verify peer 1. 
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.005.png)
-
-*Figure 3 Authenticating each other* 
-
 4. **Establishing a shared secret**: Once the peer1 and peer2 have been authenticated, peer1 and peer2 use their respective public and private keys to establish a shared secret key for AES (128 bits).  
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.006.jpeg)
-
-*Figure 4 Establishing a shared secret* 
 
 5. **Encrypting the data:** After the shared secret has been established, peer1 and peer2 use it to derive the session keys, which are used to encrypt and decrypt the data sent over the connection. The session keys are used with a symmetric encryption algorithm (AES) to secure the data. 
 5. **Verifying the data:** In addition to encrypting the data, my P2P chat system also includes a mechanism for verifying the integrity of the data. This is done using hashes, which is calculated based on the data. The hash is sent along with the data, and the recipient verifies the hash to ensure that the data has not been tampered with during transit. 
-
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.007.jpeg)
-
-*Figure 5 Encrypting the data* 
 
 2. How to Run the Application 
 
@@ -70,15 +52,9 @@ besides the libraries you must have at least 2 virtual machines working at the s
 
 Step 1: Start 2 virtual machines and run the block\_chain.py file. Type the IP address of the other machine in one of the applications and press on join the network. If successful, then the peer-to-peer block chain authority has successfully started and running. 
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.008.png)
-
-*Figure 6 block\_chain.py file* 
 
 Step 2: In another terminal run the P2P\_with\_auth.py on both machines. After running the 2 applications click **1.** connect to peer 2. swap public keys 3. auth by signature 4. agree on AES key. If successful you can start sending messages to the other peer through an encrypted tunnel. 
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.009.jpeg)
-
-*Figure 7 P2P\_with\_auth.py* 
 
 3.3: Application Functionalities 
 
@@ -97,10 +73,6 @@ Peer-to-peer networking is a distributed application architecture that partition
 **To receive data:** every node will bind its IP and static port to a **server socket**  
 
 **To send data:** every node will create a **client socket** and connect it to a peer’s IP  
-
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.010.png)
-
-*Figure 8 The Peer-To-Peer Network* 
 
 **Practical Cryptography Fall 2022![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.001.png)** ![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.002.png)
 
