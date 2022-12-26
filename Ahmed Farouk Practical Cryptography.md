@@ -1,31 +1,4 @@
-﻿**Practical Cryptography Fall 2022![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.001.png)** ![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.002.png)
-
-Practical Cryptography 
-
-COURSE WORK ONE – PEER TO PEER SECURE CHAT SYSTEM 
-
-SUPERVISOR: AYMAN TAHA 
-
-COURSE ID: KH6051 
-
-NAME: AHMED FAROUK MAHMOUD  STUDENT ID: CU2000512 
-
-Contents 
-
-[List of Figures ................................................................................................................................................ 2 ](#_page1_x69.00_y366.00)[Section 1: Introduction ................................................................................................................................. 3 ](#_page2_x69.00_y105.00)[Section 2: Application Choice ....................................................................................................................... 4 ](#_page3_x69.00_y105.00)
-
-[2.1 Application Design Plan ...................................................................................................................... 4 ](#_page3_x69.00_y404.00)[Section 3: Application overview ................................................................................................................... 5 ](#_page4_x69.00_y105.00)
-
-1. [high-level overview of how my P2P Chat system works..................................................................... 5 ](#_page4_x69.00_y126.00)
-1. [How to Run the Application ................................................................................................................ 7 ](#_page6_x69.00_y105.00)[3.3: Application Functionalities ................................................................................................................ 8 ](#_page7_x69.00_y105.00)
-
-[3.4 Cryptographic Algorithms Used .......................................................................................................... 9 ](#_page8_x69.00_y105.00)[Section 4: Security Concerns......................................................................................................................... 9 ](#_page8_x69.00_y313.00)
-
-List of Figures 
-
-[Figure 1 Negotiating...................................................................................................................................... 5 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974411)[Figure 2 Swapping public keys ...................................................................................................................... 5 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974412)[Figure 3 Authenticating each other .............................................................................................................. 5 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974413)[Figure 4 Establishing a shared secret ............................................................................................................ 6 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974414)[Figure 5 Encrypting the data ......................................................................................................................... 6 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974415)[Figure 6 block_chain.py file .......................................................................................................................... 7 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974416)[Figure 7 P2P_with_auth.py ........................................................................................................................... 7 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974417)[Figure 8 The Peer-To-Peer Network ............................................................................................................. 8 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974418)[Figure 9 Multithreading ................................................................................................................................ 8 ](file:///C:/Users/Ahtro/Desktop/P2P-ecrypted-caht-room/Ahmed%20Farouk%20Practical%20Cryptography.docx%23_Toc122974419)
-
-Section 1: Introduction  
+﻿Section 1: Introduction  
 
 A peer-to-peer (P2P) chat system is a type of online communication platform that allows users to connect and exchange messages directly with each other, rather than through a central server. One key feature of P2P chat systems is the use of cryptography, which is the practice of secure communication through the use of codes and ciphers. Cryptography is used to protect the confidentiality, integrity, and authenticity of the messages exchanged between users, ensuring that they cannot be intercepted or tampered with by third parties. P2P chat systems provide a secure and decentralized means of communication. 
 
@@ -135,7 +108,6 @@ Peer-to-peer networking is a distributed application architecture that partition
 
 As explained above in the[ peer-to-peer network,](#_page7_x69.00_y105.00) every node running the program must have the ability to receive, mine, and send blocks simultaneously. To achieve this, I used Multithreading. Multithreading is the ability of a central processing unit to provide multiple threads of execution concurrently, supported by the operating system. In my example, there are 2 main threads running at the same time. One for receiving and mining blocks and another for the menu.  
 
-![](Aspose.Words.d4fc20b0-e3d0-43b2-bd7c-62df813c63ba.011.png)
 
 *Figure 9 Multithreading* 
 
@@ -157,7 +129,3 @@ There are several security concerns to consider when designing a peer-to-peer (P
 - **Confidentiality**: It is important to ensure that the messages being exchanged between peers are kept confidential and are not accessible to unauthorized parties. This can be achieved through the use of encryption as I used RSA public keys to exchange a 128-bit AES key. And every 5 to 10 messages sent the 2 peers change the AES key used, this is known as key rotation, and it is Implemented to ensure that brute force attacks are not possible. 
 - **Integrity**: It is important to ensure that the messages being exchanged between peers have not been tampered with or modified during transmission. This can be achieved through the use of hashes, as every peer hashes every message before sending it and the other peer verifies the hash. 
 - **Authentication**: It is important to verify the identity of the peers participating in the chat to prevent impersonation attacks. This is achieved through the use of a P2P block chain certificate authority that verifies peers’ public keys and their respective IPs.  
-
-Section 4: GitHub Repository 
-
-GitHub repository link: https://github.com/ahmedfarou22/P2P-ecrypted-caht-room 
