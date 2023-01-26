@@ -17,9 +17,11 @@ needed libraries.
 6. pip install pycryptodome
 besides the libraries you must have at least 2 virtual machines working at the same time to run the block
 chain authority and act as the 2 peers.
+
 Step 1: Start 2 virtual machines and run the block_chain.py file. Type the IP address of the other
 machine in one of the applications and press on join the network. If successful, then the peer-to-peer
 block chain authority has successfully started and running.
+
 Step 2: In another terminal run the P2P_with_auth.py on both machines. After running the 2
 applications click 1. connect to peer 2. swap public keys 3. auth by signature 4. agree on AES key. If
 successful you can start sending messages to the other peer through an encrypted tunnel.
